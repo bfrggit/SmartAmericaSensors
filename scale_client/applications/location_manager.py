@@ -98,7 +98,7 @@ class LocationManager(Application):
 			return
 		if self._last_value is None and value is None:
 			return
-		if type(self._last_value) != type(value) or self._last_value["lon"] != value["lon"] or self._last_value["lat"] != value["lat"] or self._last_value["alt"] != value["alt"]:
+		if type(self._last_value) != type(value) or self._last_value["lon"] != value["lon"] or self._last_value["lat"] != value["lat"] or (self._last_value["alt"] == self._last_value["alt"] or value["alt"] == value["alt"]) and self._last_value["alt"] != value["alt"]:
 			if self._report_update:
 				up = SensedEvent(sensor="lman",
 						data={"event": "location_update", "value": value},

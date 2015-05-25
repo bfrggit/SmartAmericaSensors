@@ -41,5 +41,7 @@ class GPSVirtualSensor(VirtualSensor):
 			return False
 		if not "mode" in raw or raw["mode"] < 2:
 			return False
+		if not "lat" in raw or not "lon" in raw:
+			return False
 		return True
 

@@ -168,26 +168,29 @@ class GPSPoller(Thread):
 	def get_dict(self):
 		if not self.has_gpsd():
 			return None
-		sat = self.sat()
-		return {
-			"lat": self.lat(),
-			"lon": self.lon(),
-			"alt": self.alt(),
-			"speed": self.speed(),
-			"climb": self.climb(),
-			"track": self.track(),
-			"ptime": self.ptime(),
-			"epx": self.epx(),
-			"epy": self.epy(),
-			"epv": self.epv(),
-			"eps": self.eps(),
-			"epd": self.epd(),
-			"ept": self.ept(),
-			"mode": self.mode(),
-			"sat": {
-				"total": len(sat)
+		try:
+			sat = self.sat()
+			return {
+				"lat": self.lat(),
+				"lon": self.lon(),
+				"alt": self.alt(),
+				"speed": self.speed(),
+				"climb": self.climb(),
+				"track": self.track(),
+				"ptime": self.ptime(),
+				"epx": self.epx(),
+				"epy": self.epy(),
+				"epv": self.epv(),
+				"eps": self.eps(),
+				"epd": self.epd(),
+				"ept": self.ept(),
+				"mode": self.mode(),
+				"sat": {
+					"total": len(sat)
+				}
 			}
-		}
+		except:
+			return None
 
 MAIN_SLEEP = 1
 
