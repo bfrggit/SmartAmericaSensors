@@ -19,8 +19,9 @@ class EventReporter(Application):
         self.__sinks = []
         self._lman = None
         self._neta = None
-        self._mysql_sink = None
         self._puba = None
+        self._mysql_sink = None
+        self._rf_sink = None
 
     def add_sink(self, sink):
         """
@@ -62,12 +63,21 @@ class EventReporter(Application):
         elif et == "publisher_state":
             return
 
+        # Send event to RF writer
+        if self._rf_sink is not None:
+            if not hasattr(event, "db_record"): # not from database
+                if self._rf_sink.check_available(event):
+                    self._rf_sink.send_event(event)
+
         # Ignorance
         if self._lman is not None:
             if et in self._lman.SOURCE_SUPPORT:
                 return
             if et != "location_update":
                 self._lman.tag_event(event)
+
+        if et == "rfcomm_connect":
+            return
 
         # Send event to sinks
         published = False
@@ -81,7 +91,16 @@ class EventReporter(Application):
                 except ValueError:
                     pass
                 next
-            elif sink.check_available(event):
+            if type(sink).__name__ == "RFEventSink":
+                if self._rf_sink is None:
+                    self._rf_sink = sink
+                try:
+                    self.__sinks.remove(sink)
+                    log.info("found RF writer")
+                except ValueError:
+                    pass
+                next
+            if sink.check_available(event):
                 if sink.send_event(event):
                     published = True
                 # TODO: only send via one of the sinks?

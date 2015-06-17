@@ -27,6 +27,9 @@ EventSinks:
         event_types:
             - "location_update"
             - "iwlist_scan"
+    - RFWriter:
+        class: "rf_event_sink.RFEventSink"
+        tty_path: "/dev/rfcomm9"
 
 Applications:
     - LocationManager:
@@ -36,6 +39,9 @@ Applications:
         dbname: "scale_cycle"
         username: "scale_usr"
         password: "123456"
+    - RFListener:
+        class: "rf_listener.RFListener"
+        tty_path: "/dev/rfcomm9"
 
 Sensors:
     - HBSensor:
