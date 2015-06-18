@@ -1,6 +1,7 @@
 from application import Application 
 
 import time
+import re
 import logging
 log = logging.getLogger(__name__)
 
@@ -76,7 +77,9 @@ class EventReporter(Application):
             if et != "location_update":
                 self._lman.tag_event(event)
 
-        if et == "rfcomm_connect":
+        if re.match("rfcomm", et) is not None:
+            return
+        if re.match("debug", et) is not None:
             return
 
         # Send event to sinks

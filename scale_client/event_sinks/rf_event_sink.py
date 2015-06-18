@@ -28,7 +28,7 @@ class RFEventSink(EventSink):
 			log.info("messaged wrote to " + self._dev_name)
 		except IOError:
 			log.warning("failed writing to " + self._dev_name)
-		log.info(msg)
+		#log.info(msg)
 
 	def encode_event(self, event):
 		et = event.get_type()
