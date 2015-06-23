@@ -15,7 +15,7 @@ class LocationManager(Application):
 
 	It reports location changes to other components for them to tag SensedEvent
 	"""
-	def __init__(self, broker, report_update=True):
+	def __init__(self, broker, report_update=True, debug=False):
 		super(LocationManager, self).__init__(broker)
 
 		# Keep location coordinates and its time-stamp, associated with source
@@ -25,6 +25,8 @@ class LocationManager(Application):
 		self._last_value = None
 		self._ack_success = False
 		self._pool_lock = Lock()
+		self._debug_flag = debug
+		self._debug_location_timer = None
 
 	SOURCE_SUPPORT = ["geo_ip", "gps", "fake_location", "rand_location"]
 
@@ -33,6 +35,13 @@ class LocationManager(Application):
 		LocationManager should deal with all location events published by
 		location providers.
 		"""
+		if not self._ack_success:
+			ack = SensedEvent(sensor="lman",
+					data={"event": "location_manager_ack", "value": self},
+					priority=4)
+			self.publish(ack)
+			log.debug("send ack to event reporter");
+
 		# Ignore events from database
 		if hasattr(event, "db_record"):
 			return
@@ -67,6 +76,7 @@ class LocationManager(Application):
 		"""
 		best_device = None
 		highest_pri = None
+		#log.warning("static debug update location")
 
 		for device in list(self._location_pool):
 			if self._location_pool[device]["expire"] < time.time():
@@ -79,15 +89,10 @@ class LocationManager(Application):
 		# if not best_device:
 		# 	return
 
-		if not self._ack_success:
-			ack = SensedEvent(sensor="lman",
-					data={"event": "location_manager_ack", "value": self},
-					priority=4)
-			self.publish(ack)
-			log.debug("send ack to event reporter");
-
 		value = None
+		#log.warning("static debug device is None: " + str(best_device is None))
 		if best_device is not None:
+			#log.warning("static debug device: " + str(best_device))
 			best_location = self._location_pool[best_device]
 			value = {}
 			value["lat"] = best_location["lat"]
@@ -96,6 +101,11 @@ class LocationManager(Application):
 
 		if value is not None and type(value) != type({}):
 			return
+		
+		# Debug
+		if self._debug_flag:
+			self._debug(self._last_value, value)
+
 		if self._last_value is None and value is None:
 			return
 		if type(self._last_value) != type(value) or self._last_value["lon"] != value["lon"] or self._last_value["lat"] != value["lat"] or (self._last_value["alt"] == self._last_value["alt"] or value["alt"] == value["alt"]) and self._last_value["alt"] != value["alt"]:
@@ -115,3 +125,25 @@ class LocationManager(Application):
 			self._pool_lock.release()
 		if self._last_value is not None:
 			event.data["geotag"] = copy.copy(self._last_value)
+
+	def _debug(self, last_value, this_value):
+		if (last_value is None) != (this_value is None):
+			debug_e = SensedEvent(sensor="lman",
+					data={"event": "debug_location_update", "value": this_value is not None},
+					priority=7
+				)
+			self.publish(debug_e)
+			#log.warning(this_value is not None)
+			self._debug_location_timer = time.time()
+		elif self._debug_location_timer is None:
+			self._debug_location_timer = time.time()
+		elif self._debug_location_timer + 19 < time.time():
+			debug_e = SensedEvent(sensor="lman",
+					data={"event": "debug_location_update", "value": this_value is not None},
+					priority=7
+				)
+			self.publish(debug_e)
+			#log.warning(this_value is not None)
+			self._debug_location_timer = time.time()
+
+

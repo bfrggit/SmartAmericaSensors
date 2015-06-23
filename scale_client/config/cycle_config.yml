@@ -34,6 +34,7 @@ EventSinks:
 Applications:
     - LocationManager:
         class: "location_manager.LocationManager"
+        debug: true
     - MySQLDatabase:
         class: "mysql_maintainer.MySQLMaintainer"
         dbname: "scale_cycle"
@@ -79,4 +80,5 @@ Sensors:
     - GPSSensor:
         class: "location_sensors.gps_virtual_sensor.GPSVirtualSensor"
         dev_name: "gps0"
+        debug: true
 

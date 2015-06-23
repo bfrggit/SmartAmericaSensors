@@ -71,7 +71,7 @@ class GPSVirtualSensor(VirtualSensor):
 			self._mode_timer = time.time()
 		elif self._mode_timer is None:
 			self._mode_timer = time.time()
-		elif self._mode_timer + 30 < time.time():
+		elif self._mode_timer + 31 < time.time():
 			self.publish(self._debug_make_event("debug_gps_mode", this_mode, priority=9))
 			self._mode_timer = time.time()
 		self._last_mode = this_mode
@@ -91,7 +91,7 @@ class GPSVirtualSensor(VirtualSensor):
 			self._location_timer = time.time()
 		elif self._location_timer is None:
 			self._location_timer = time.time()
-		elif self._location_timer + 30 < time.time():
+		elif self._location_timer + 29 < time.time():
 			self.publish(self._debug_make_event("debug_gps_location", this_location, priority=9))
 			self._location_timer = time.time()
 		self._last_location = this_location
