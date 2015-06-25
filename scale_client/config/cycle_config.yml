@@ -30,6 +30,7 @@ EventSinks:
     - RFWriter:
         class: "rf_event_sink.RFEventSink"
         tty_path: "/dev/rfcomm9"
+        sleep: 0
 
 Applications:
     - LocationManager:

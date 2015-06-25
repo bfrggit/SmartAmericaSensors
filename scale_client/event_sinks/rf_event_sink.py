@@ -9,12 +9,13 @@ log = logging.getLogger(__name__)
 
 
 class RFEventSink(EventSink):
-	def __init__(self, broker, tty_path=None):
+	def __init__(self, broker, tty_path=None, sleep=0):
 		super(RFEventSink, self).__init__(broker)
 		if not tty_path or type(tty_path) != type(""):
 			raise TypeError
 		self._dev_path = tty_path
 		self._dev_name = tty_path.split("/")[-1]
+		self._sleep = sleep
 		self._rfca = False
 		self._rf_lock = threading.Lock()
 
@@ -23,17 +24,17 @@ class RFEventSink(EventSink):
 			return
 
 		msg = encoded_event
-		timestamp = time.strftime("%H:%M", time.localtime(time.time()))
+		timestamp = time.strftime("%H:%M:%S", time.localtime(time.time()))
 		d = None
 		self._rf_lock.acquire()
 		try:
-			d = open(self._dev_path, "w")
-			d.write(timestamp + " " + msg + "\r\n")
+			d = open(self._dev_path, "r+")
+			d.write(timestamp + " " + msg + " \r\n")
 			d.close()
 			log.info("messaged wrote to " + self._dev_name)
 		except IOError:
 			log.warning("failed writing to " + self._dev_name)
-		time.sleep(0.2)
+		time.sleep(self._sleep)
 		self._rf_lock.release()
 		#log.info(msg)
 
@@ -74,9 +75,11 @@ class RFEventSink(EventSink):
 					encoded_event += "UNKNOWN" # Should not happen
 			else:
 				log.warning("unrecognized data type in event object with type: " + et)
-		elif et == "debug_gps_location":
+		elif et == "debug_gps_location" or et == "debug_gps_jump":
 			if type(ed) == type({}) and "lat" in ed and "lon" in ed:
 				encoded_event = "GPS: " + str(ed["lat"]) + ", " + str(ed["lon"])
+				if et == "debug_gps_jump":
+					encoded_event += " JUMP"
 			elif ed is None:
 				encoded_event = "GPS: Location unavailable."
 			else:
@@ -86,6 +89,16 @@ class RFEventSink(EventSink):
 				encoded_event = "LM: Location available."
 			else:
 				encoded_event = "LM: Location unavailable."
+		elif et == "debug_location_expire":
+			if type(ed) == type(""):
+				encoded_event = "LM: Location expired (" + ed + ")"
+			else:
+				log.warning("unrecognized data type in event object with type: " + et)
+		elif et == "debug_text":
+			if type(ed) == type(""):
+				encoded_event = "TEXT: " + ed
+			else:
+				log.warning("unrecognized data type in event object with type: " + et)
 		else: # Unrecognized event
 			log.debug("unrecognized event")
 			pass

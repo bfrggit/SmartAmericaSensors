@@ -7,11 +7,12 @@ import logging
 log = logging.getLogger(__name__)
 
 class GPSVirtualSensor(VirtualSensor):
-	def __init__(self, broker, device=None, interval=1, exp=10, debug=False):
+	def __init__(self, broker, device=None, interval=1, exp=10, debug=False, debug_interval=10):
 		super(GPSVirtualSensor, self).__init__(broker, device=device, interval=interval)
 		self._exp = exp
 		self._gps_poller = None
 		self._debug_flag = debug
+		self._debug_interval = debug_interval
 		self._last_mode = None
 		self._last_location = None
 		self._mode_timer = None
@@ -71,7 +72,7 @@ class GPSVirtualSensor(VirtualSensor):
 			self._mode_timer = time.time()
 		elif self._mode_timer is None:
 			self._mode_timer = time.time()
-		elif self._mode_timer + 31 < time.time():
+		elif self._mode_timer + self._debug_interval < time.time():
 			self.publish(self._debug_make_event("debug_gps_mode", this_mode, priority=9))
 			self._mode_timer = time.time()
 		self._last_mode = this_mode
@@ -86,12 +87,12 @@ class GPSVirtualSensor(VirtualSensor):
 		if type(this_location) != type(self._last_location): # Location fixed or lost
 			self.publish(self._debug_make_event("debug_gps_location", this_location))
 			self._location_timer = time.time()
-		elif this_location is not None and distance.vincenty((this_location["lat"], this_location["lon"]), (self._last_location["lat"], self._last_location["lon"])).meters > 20: # Location changed too much
-			self.publish(self._debug_make_event("debug_gps_location", this_location, priority=5))
+		elif this_location is not None and distance.vincenty((this_location["lat"], this_location["lon"]), (self._last_location["lat"], self._last_location["lon"])).meters > 20.0: # Location changed too much
+			self.publish(self._debug_make_event("debug_gps_jump", this_location, priority=5))
 			self._location_timer = time.time()
 		elif self._location_timer is None:
 			self._location_timer = time.time()
-		elif self._location_timer + 29 < time.time():
+		elif self._location_timer + self._debug_interval < time.time():
 			self.publish(self._debug_make_event("debug_gps_location", this_location, priority=9))
 			self._location_timer = time.time()
 		self._last_location = this_location

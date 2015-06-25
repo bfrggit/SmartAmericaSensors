@@ -70,17 +70,17 @@ class EventReporter(Application):
                 if self._rf_sink.check_available(event):
                     self._rf_sink.send_event(event)
 
+        if re.match("rfcomm", et) is not None:
+            return
+        if re.match("debug", et) is not None:
+            return
+
         # Ignorance
         if self._lman is not None:
             if et in self._lman.SOURCE_SUPPORT:
                 return
             if et != "location_update":
                 self._lman.tag_event(event)
-
-        if re.match("rfcomm", et) is not None:
-            return
-        if re.match("debug", et) is not None:
-            return
 
         # Send event to sinks
         published = False

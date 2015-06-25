@@ -2,6 +2,7 @@ import time
 import copy
 from circuits import Event
 import pprint
+import json
 
 class SensedEvent(Event):
     """
