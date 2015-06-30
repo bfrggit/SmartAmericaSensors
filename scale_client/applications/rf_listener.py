@@ -26,17 +26,11 @@ class RFListener(ThreadedApplication):
 			try:
 				d = open(self._dev_path)
 				log.info("connected")
-				structured_data = {
-						"event": "rfcomm_connect",
-						"value": True
-					}
-				event = SensedEvent(
-						sensor=self._dev_name,
-						data=structured_data,
-						priority=self.CONNECT_PRIORITY
-					)
-				self.publish(event)
+				#self._flag_loc = True
+				self.publish(self._debug_connect_event(True))
 			except IOError:
+				#log.warning("failed")
+				#self._flag_loc = False
 				sleep(1)
 				continue
 			while True:
@@ -44,16 +38,8 @@ class RFListener(ThreadedApplication):
 				if message == "": # Disconnected
 					d.close()
 					log.info("disconnected")
-					structured_data = {
-							"event": "rfcomm_connect",
-							"value": False
-						}
-					event = SensedEvent(
-							sensor=self._dev_name,
-							data=structured_data,
-							priority=self.CONNECT_PRIORITY
-						)
-					self.publish(event)
+					#self._flag_loc = False
+					self.publish(self._debug_connect_event(False))
 					sleep(1)
 					break
 				message = message.rstrip()
@@ -68,3 +54,15 @@ class RFListener(ThreadedApplication):
 					)
 				self.publish(event)
 
+	def _debug_connect_event(self, value):
+		structured_data = {
+				"event": "rfcomm_connect",
+				"value": value
+			}
+		event = SensedEvent(
+				sensor=self._dev_name,
+				data=structured_data,
+				priority=self.CONNECT_PRIORITY
+			)
+		return event
+	
