@@ -8,10 +8,11 @@ import logging
 log = logging.getLogger(__name__)
 
 class IWListVirtualSensor(ThreadedVirtualSensor):
-	def __init__(self, broker, device=None, interval=4, if_name=None):
+	def __init__(self, broker, device=None, interval=4, if_name=None, debug=False):
 		super(IWListVirtualSensor, self).__init__(broker, device=device, interval=interval)
 		self._interval = interval
 		self._if_name = if_name # Interface device name, for example: wlan0
+		self._debug_flag = debug
 
 	def get_type(self):
 		return "iwlist_scan"
@@ -58,11 +59,19 @@ class IWListVirtualSensor(ThreadedVirtualSensor):
 			event.timestamp = timestamp
 			event_list.append(event)
 
+		n_total = len(event_list)
+		n_pub = 0
 		for event in event_list:
 			if event is None:
 				continue
 			if self.policy_check(event):
+				n_pub += 1
 				self.publish(event)
+		if self._debug_flag:
+			debug_e = self.make_event_with_raw_data((n_total, n_pub))
+			debug_e.data["event"] = "debug_iwlist_scan_count"
+			debug_e.priority = 7
+			self.publish(debug_e)
 	
 	def policy_check(self, data):
 		return True

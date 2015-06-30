@@ -19,17 +19,23 @@ class RFEventSink(EventSink):
 		self._rfca = False
 		self._rf_lock = threading.Lock()
 
-	def send(self, encoded_event):
-		if not encoded_event:
+	def send(self, encoded_event_2):
+		if not encoded_event_2 or not type(encoded_event_2) == type(()) or len(encoded_event_2) != 2:
 			return
 
+		time_x, encoded_event = encoded_event_2
+		time_f = time.time()
+		timestamp = time.strftime("%H:%M:%S", time.localtime(time_f))
+		time_diff = " "
+		if time_x is not None:
+			time_diff = " %+d " % round((time_x - time_f) * 1000)
+
 		msg = encoded_event
-		timestamp = time.strftime("%H:%M:%S", time.localtime(time.time()))
 		d = None
 		self._rf_lock.acquire()
 		try:
 			d = open(self._dev_path, "r+")
-			d.write(timestamp + " " + msg + " \r\n")
+			d.write(timestamp + time_diff + msg + " \r\n")
 			d.close()
 			log.info("messaged wrote to " + self._dev_name)
 		except IOError:
@@ -50,6 +56,9 @@ class RFEventSink(EventSink):
 		ed = event.get_raw_data()
 		log.debug("received event type: " + et)
 		encoded_event = None
+		timestamp = None
+		if hasattr(event, "timestamp") and (type(event.timestamp) == type(9.0) or type(event.timestamp) == type(9)):
+			timestamp = event.timestamp
 
 		if et == "heartbeat":
 			encoded_event = "HB"
@@ -77,7 +86,7 @@ class RFEventSink(EventSink):
 				log.warning("unrecognized data type in event object with type: " + et)
 		elif et == "debug_gps_location" or et == "debug_gps_jump":
 			if type(ed) == type({}) and "lat" in ed and "lon" in ed:
-				encoded_event = "GPS: " + str(ed["lat"]) + ", " + str(ed["lon"])
+				encoded_event = "GPS: " + "%.4f" % ed["lat"] + ", " + "%.4f" % ed["lon"]
 				if et == "debug_gps_jump":
 					encoded_event += " JUMP"
 			elif ed is None:
@@ -99,10 +108,20 @@ class RFEventSink(EventSink):
 				encoded_event = "TEXT: " + ed
 			else:
 				log.warning("unrecognized data type in event object with type: " + et)
+		elif et == "debug_iwlist_scan_count":
+			if type(ed) == type(()) and len(ed) == 2:
+				encoded_event = "IWLIST: %d, %d" % ed
+			else:
+				log.warning("unrecognized data type in event object with type: " + et)
 		else: # Unrecognized event
 			log.debug("unrecognized event")
 			pass
-		return encoded_event
+
+		encoded_event_2 = None
+
+		if encoded_event is not None:
+			encoded_event_2 = (timestamp, encoded_event)
+		return encoded_event_2
 
 	def check_available(self, event):
 		et = event.get_type()

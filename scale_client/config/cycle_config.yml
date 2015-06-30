@@ -78,6 +78,7 @@ Sensors:
         class: "iwlist_virtual_sensor.IWListVirtualSensor"
         dev_name: "iw0"
         if_name: "wlan0"
+        debug: true
     - GPSSensor:
         class: "location_sensors.gps_virtual_sensor.GPSVirtualSensor"
         dev_name: "gps0"
