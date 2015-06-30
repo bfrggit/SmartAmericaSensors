@@ -66,6 +66,7 @@ class IWListVirtualSensor(ThreadedVirtualSensor):
 			event = self.make_event_with_raw_data(data)
 			event.timestamp = timestamp
 			event_list.append(event)
+		event_list.sort(key=lambda x: (x.get_raw_data()["quality"], x.get_raw_data()["level"], -x.get_raw_data()["noise"]), reverse=True)
 
 		n_total = len(event_list)
 		n_pub = 0
