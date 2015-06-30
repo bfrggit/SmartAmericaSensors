@@ -88,7 +88,7 @@ class RFEventSink(EventSink):
 			if type(ed) == type({}) and "lat" in ed and "lon" in ed:
 				encoded_event = "GPS: " + "%.4f" % ed["lat"] + ", " + "%.4f" % ed["lon"]
 				if et == "debug_gps_jump":
-					encoded_event += " JUMP"
+					encoded_event += " (?)"
 			elif ed is None:
 				encoded_event = "GPS: Location unavailable."
 			else:
@@ -109,9 +109,19 @@ class RFEventSink(EventSink):
 			else:
 				log.warning("unrecognized data type in event object with type: " + et)
 		elif et == "debug_iwlist_scan_count":
-			if type(ed) == type(()) and len(ed) == 2:
-				encoded_event = "IWLIST: %d, %d" % ed
-			else:
+			warning_flag = True
+			if type(ed) == type(()):
+				if len(ed) == 2 and type(ed[0]) == type(ed[1]) and type(ed[1]) == type(9):
+					encoded_event = "IWLIST: %d, %d" % ed
+					warning_flag = False
+				elif len(ed) == 3 and type(ed[0]) == type(ed[1]) and type(ed[1]) == type(ed[2]) and type(ed[2]) == type(9):
+					if ed[2] == 0:
+						encoded_event = "IWLIST: %d, %d" % ed[0:2]
+						warning_flag = False
+					elif ed[2] > 0:
+						encoded_event = "IWLIST: %d, %d (%d)" % (ed[0], ed[1] + ed[2], ed[2])
+						warning_flag = False
+			if warning_flag:
 				log.warning("unrecognized data type in event object with type: " + et)
 		else: # Unrecognized event
 			log.debug("unrecognized event")

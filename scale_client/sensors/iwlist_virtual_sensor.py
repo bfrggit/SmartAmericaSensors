@@ -69,14 +69,18 @@ class IWListVirtualSensor(ThreadedVirtualSensor):
 
 		n_total = len(event_list)
 		n_pub = 0
+		n_white = 0
 		for event in event_list:
 			if event is None:
 				continue
 			if self.policy_check(event):
-				n_pub += 1
+				if self._is_white(event):
+					n_white += 1
+				else:
+					n_pub += 1
 				self.publish(event)
 		if self._debug_flag:
-			debug_e = self.make_event_with_raw_data((n_total, n_pub))
+			debug_e = self.make_event_with_raw_data((n_total, n_pub, n_white))
 			debug_e.data["event"] = "debug_iwlist_scan_count"
 			debug_e.priority = 7
 			self.publish(debug_e)
@@ -95,4 +99,15 @@ class IWListVirtualSensor(ThreadedVirtualSensor):
 				ret = False
 
 		return ret
+	
+	def _is_white(self, event):
+		data = event.get_raw_data()
+		if type(data) != type({}):
+			raise TypeError
+		if "essid" not in data:
+			raise ValueError
+
+		if self._white_list is None:
+			return False
+		return data["essid"] in self._white_list
 
