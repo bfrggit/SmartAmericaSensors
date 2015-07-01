@@ -79,6 +79,19 @@ Sensors:
         dev_name: "iw0"
         if_name: "wlan0"
         debug: true
+        empty_essid: false
+        max_unknown: 0
+        white_list:
+            - "SCALE"
+            - "THINGSTITUTE"
+            - "MoCoDanHoffman"
+            - "Peerless-2.4"
+            - "MCGUEST"
+            - "xfinitywifi"
+            - "SCALE_VC"
+            - "SCALE_VC_Guest"
+            - "SubwayGuest"
+            - "Dumplinghouse"
     - GPSSensor:
         class: "location_sensors.gps_virtual_sensor.GPSVirtualSensor"
         dev_name: "gps0"

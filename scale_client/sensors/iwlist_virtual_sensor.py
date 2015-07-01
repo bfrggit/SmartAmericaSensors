@@ -77,8 +77,10 @@ class IWListVirtualSensor(ThreadedVirtualSensor):
 			if self.policy_check(event):
 				if self._is_white(event):
 					n_white += 1
-				else:
+				elif n_pub < self._max_unknown:
 					n_pub += 1
+				else:
+					continue
 				self.publish(event)
 		if self._debug_flag:
 			debug_e = self.make_event_with_raw_data((n_total, n_pub, n_white))
