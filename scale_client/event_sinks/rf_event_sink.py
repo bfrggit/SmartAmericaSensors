@@ -142,6 +142,11 @@ class RFEventSink(EventSink):
 				encoded_event = "GF: Target %s triggered." % ed
 			else:
 				log.warning("unrecognized data type in event object with type: " + et)
+		elif et == "debug_geofence_list":
+			if type(ed) == type([]):
+				encoded_event = "GF: Target list: " + " ".join(ed)
+			else:
+				log.warning("unrecognized data type in event object with type: " + et)
 		else: # Unrecognized event
 			log.debug("unrecognized event")
 			pass

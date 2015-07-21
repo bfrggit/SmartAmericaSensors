@@ -10,7 +10,7 @@ import logging
 log = logging.getLogger(__name__)
 
 class MySQLMaintainer(Application):
-	def __init__(self, broker, dbname, username, password, interval=10, cleanup=43200):
+	def __init__(self, broker, dbname, username, password, interval=10, cleanup=43200, auto=None):
 		super(MySQLMaintainer, self).__init__(broker)
 
 		self._interval = interval
@@ -24,6 +24,7 @@ class MySQLMaintainer(Application):
 		self._db_lock = Lock()
 		self._clean_timer = None
 		self._clean_timeout = cleanup
+		self._auto = auto
 	
 	class EventRecord(peewee.Model):
 		class Meta:
@@ -60,7 +61,8 @@ class MySQLMaintainer(Application):
 		#self._clean_up()
 		if self._interval is None:
 			return
-		self.timed_call(self._interval, MySQLMaintainer._cron, repeat=True)
+		if self._auto is None or self._auto:
+			self.timed_call(self._interval, MySQLMaintainer._cron, repeat=True)
 
 	def _cron(self):
 		if self._db is None:

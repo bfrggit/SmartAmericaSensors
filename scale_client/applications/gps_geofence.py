@@ -36,6 +36,7 @@ class GPSGeofence(Application):
 		#	Radius as float
 		#	Direction flag (+1 for inside, -1 for outside) as int
 		self._spots = dict()
+		self._spot_names = []
 		if type(config) == type(""):
 			try:
 				with open(config) as cfile:
@@ -52,6 +53,7 @@ class GPSGeofence(Application):
 							continue
 						self._spots[key + "I"] = {"lat": cfg[key]["lat"], "lon": cfg[key]["lon"], "radius": cfg[key]["i_radi"], "d_flag": +1}
 						self._spots[key + "O"] = {"lat": cfg[key]["lat"], "lon": cfg[key]["lon"], "radius": cfg[key]["o_radi"], "d_flag": -1}
+						self._spot_names.append(key)
 			except IOError as e:
 				log.error("Error reading config file: %s" % e)
 			except (TypeError, ValueError):
@@ -60,6 +62,7 @@ class GPSGeofence(Application):
 			log.warning("No config file is identified")
 		else:
 			log.error("Error reading config file")
+		self._spot_names.sort()
 
 	SOURCE_SUPPORT = ["gps"]
 
@@ -77,7 +80,7 @@ class GPSGeofence(Application):
 			with self._t_lock:
 				if self._target is None and type(ed) == type("") and ed in self._spots:
 					self._target = ed
-					log.info("geofence target set")
+					log.info("geofence target set: %s" % ed)
 					if self._debug_flag:
 						debug_e = SensedEvent(
 								sensor="geofence",
@@ -108,6 +111,13 @@ class GPSGeofence(Application):
 						)
 					self.publish(debug_e)
 			return
+		elif et == "cmd_geofence_list":
+			list_e = SensedEvent(
+					sensor="geofence",
+					data={"event": "debug_geofence_list", "value": self._spot_names},
+					priority=7
+				)
+			self.publish(list_e)
 
 		# Check if event contains geo-coordinates
 		if self._target is None:

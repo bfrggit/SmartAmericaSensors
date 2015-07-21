@@ -86,13 +86,15 @@ class RFListener(ThreadedApplication):
 		sd = {"event": None, "value": None}
 		if lc[1] == "GF":
 			if len(lc) < 3:
-				sd["event"] = "debug_cmd_bad_format"
+				sd["event"] = "cmd_geofence_list"
 			else:
 				if lc[2] in ["R", "RST", "RESET"] and len(lc) == 3:
 					sd["event"] = "cmd_geofence_reset"
 				elif lc[2] in ["S", "SET"] and len(lc) == 4:
 					sd["event"] = "cmd_geofence_set"
 					sd["value"] = lc[3]
+				elif lc[2] in ["L", "LS", "LST", "LIST"] and len(lc) == 3:
+					sd["event"] = "cmd_geofence_list"
 				else:
 					sd["event"] = "debug_cmd_bad_format"
 		else:
