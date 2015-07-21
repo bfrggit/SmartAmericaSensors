@@ -123,6 +123,25 @@ class RFEventSink(EventSink):
 						warning_flag = False
 			if warning_flag:
 				log.warning("unrecognized data type in event object with type: " + et)
+		elif et == "debug_cmd_bad_format":
+			encoded_event = "CMD: Bad format."
+		elif et == "debug_geofence_reset":
+			encoded_event = "GF: Target reset."
+		elif et == "debug_geofence_set" or et == "debug_geofence_set_failure":
+			if type(ed) == type(""):
+				encoded_event = "GF: Target "
+				if et == "debug_geofence_set_failure":
+					encoded_event += "cannot set: "
+				else:
+					encoded_event += "set: "
+				encoded_event += ed
+			else:
+				log.warning("unrecognized data type in event object with type: " + et)
+		elif et == "geofence_trigger":
+			if type(ed) == type(""):
+				encoded_event = "GF: Target %s triggered." % ed
+			else:
+				log.warning("unrecognized data type in event object with type: " + et)
 		else: # Unrecognized event
 			log.debug("unrecognized event")
 			pass

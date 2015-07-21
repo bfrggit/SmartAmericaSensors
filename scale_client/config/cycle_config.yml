@@ -44,6 +44,10 @@ Applications:
     - RFListener:
         class: "rf_listener.RFListener"
         tty_path: "/dev/rfcomm9"
+    - GPSGeofence:
+        class: "gps_geofence.GPSGeofence"
+        debug: true
+        config: "/etc/scale/client/cycle/targets.yml"
 
 Sensors:
     - HBSensor:

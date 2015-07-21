@@ -1,4 +1,6 @@
 from time import sleep
+import re
+
 from scale_client.core.threaded_application import ThreadedApplication
 from scale_client.core.sensed_event import SensedEvent
 
@@ -43,10 +45,19 @@ class RFListener(ThreadedApplication):
 					sleep(1)
 					break
 				message = message.rstrip()
-				structured_data = {
-						"event": "rfcomm_message",
-						"value": message
-					}
+				structured_data = None
+
+				# Check if message is a command
+				if re.match("[Cc]\s", message) is not None and message.split()[0] in ["C", "c"]:
+					structured_data = self._parse_command(message.upper())
+				else:
+					structured_data = {
+							"event": "rfcomm_message",
+							"value": message
+						}
+
+				if structured_data is None:
+					continue
 				event = SensedEvent(
 						sensor=self._dev_name,
 						data=structured_data,
@@ -66,3 +77,25 @@ class RFListener(ThreadedApplication):
 			)
 		return event
 	
+	def _parse_command(self, message):
+		lc = message.split()
+		if len(lc) < 2 or lc[0] != "C":
+			log.warning("unexpected commmand")
+			return None
+
+		sd = {"event": None, "value": None}
+		if lc[1] == "GF":
+			if len(lc) < 3:
+				sd["event"] = "debug_cmd_bad_format"
+			else:
+				if lc[2] in ["R", "RST", "RESET"] and len(lc) == 3:
+					sd["event"] = "cmd_geofence_reset"
+				elif lc[2] in ["S", "SET"] and len(lc) == 4:
+					sd["event"] = "cmd_geofence_set"
+					sd["value"] = lc[3]
+				else:
+					sd["event"] = "debug_cmd_bad_format"
+		else:
+			sd["event"] = "debug_cmd_bad_format"
+		return sd
+
