@@ -46,8 +46,8 @@ Applications:
         tty_path: "/dev/rfcomm9"
     - GPSGeofence:
         class: "gps_geofence.GPSGeofence"
-        debug: true
         config: "/etc/scale/client/cycle/targets.yml"
+        debug: true
 
 Sensors:
     - HBSensor:
@@ -99,5 +99,4 @@ Sensors:
     - GPSSensor:
         class: "location_sensors.gps_virtual_sensor.GPSVirtualSensor"
         dev_name: "gps0"
-        debug: true
 

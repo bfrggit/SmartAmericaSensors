@@ -19,11 +19,14 @@ class RFEventSink(EventSink):
 		self._rfca = False
 		self._rf_lock = threading.Lock()
 
-	def send(self, encoded_event_2):
-		if not encoded_event_2 or not type(encoded_event_2) == type(()) or len(encoded_event_2) != 2:
+		self._encoders = dict()
+		self._register_encoders()
+
+	def send(self, eets):
+		if not eets or not type(eets) == type(()) or len(eets) != 2:
 			return
 
-		time_x, encoded_event = encoded_event_2
+		time_x, encoded_event = eets
 		time_f = time.time()
 		timestamp = time.strftime("%H:%M:%S", time.localtime(time_f))
 		time_diff = " "
@@ -50,19 +53,15 @@ class RFEventSink(EventSink):
 		2: "2D FIX",
 		3: "3D FIX"
 	}
-
-	def encode_event(self, event):
-		et = event.get_type()
-		ed = event.get_raw_data()
-		log.debug("received event type: " + et)
-		encoded_event = None
-		timestamp = None
-		if hasattr(event, "timestamp") and (type(event.timestamp) == type(9.0) or type(event.timestamp) == type(9)):
-			timestamp = event.timestamp
-
-		if et == "heartbeat":
+	
+	def _register_encoders(self):
+		def encdr_0(et, ed):
 			encoded_event = "HB"
-		elif et == "rfcomm_connect":
+			return encoded_event
+		self._encoders["heartbeat"] = encdr_0
+
+		def encdr_1(et, ed):
+			encoded_event = None
 			if ed is not None:
 				self._rfca = ed
 				if self._rfca:
@@ -70,12 +69,20 @@ class RFEventSink(EventSink):
 					log.debug("rfcomm device available")
 				else:
 					log.debug("rfcomm device unavailable")
-		elif et == "rfcomm_message":
+			return encoded_event
+		self._encoders["rfcomm_connect"] = encdr_1
+
+		def encdr_2(et, ed):
+			encoded_event = None
 			if type(ed) == type(""):
 				encoded_event = "ECHO: " + ed
 			else:
 				log.warning("unrecognized data type in event object with type: " + et)
-		elif et == "debug_gps_mode":
+			return encoded_event
+		self._encoders["rfcomm_message"] = encdr_2
+
+		def encdr_3(et, ed):
+			encoded_event = None
 			if type(ed) == type(9):
 				encoded_event = "GPS: Mode " + str(ed) + " "
 				if ed in self.MODE_STR:
@@ -84,31 +91,36 @@ class RFEventSink(EventSink):
 					encoded_event += "UNKNOWN" # Should not happen
 			else:
 				log.warning("unrecognized data type in event object with type: " + et)
-		elif et == "debug_gps_location" or et == "debug_gps_jump":
-			if type(ed) == type({}) and "lat" in ed and "lon" in ed:
-				encoded_event = "GPS: " + "%.4f" % ed["lat"] + ", " + "%.4f" % ed["lon"]
-				if et == "debug_gps_jump":
-					encoded_event += " (?)"
-			elif ed is None:
-				encoded_event = "GPS: Location unavailable."
-			else:
-				log.warning("unrecognized data type in event object with type: " + et)
-		elif et == "debug_location_update":
+			return encoded_event
+		self._encoders["debug_gps_mode"] = encdr_3
+
+		def encdr_4(et, ed):
+			encoded_event = "LM: Location unavailable."
 			if ed:
 				encoded_event = "LM: Location available."
-			else:
-				encoded_event = "LM: Location unavailable."
-		elif et == "debug_location_expire":
+			return encoded_event
+		self._encoders["debug_location_update"] = encdr_4
+
+		def encdr_5(et, ed):
+			encoded_event = None
 			if type(ed) == type(""):
 				encoded_event = "LM: Location expired (" + ed + ")"
 			else:
 				log.warning("unrecognized data type in event object with type: " + et)
-		elif et == "debug_text":
+			return encoded_event
+		self._encoders["debug_location_expire"] = encdr_5
+
+		def encdr_6(et, ed):
+			encoded_event = None
 			if type(ed) == type(""):
 				encoded_event = "TEXT: " + ed
 			else:
 				log.warning("unrecognized data type in event object with type: " + et)
-		elif et == "debug_iwlist_scan_count":
+			return encoded_event
+		self._encoders["debug_text"] = encdr_6
+
+		def encdr_7(et, ed):
+			encoded_event = None
 			warning_flag = True
 			if type(ed) == type(()):
 				if len(ed) == 2 and type(ed[0]) == type(ed[1]) and type(ed[1]) == type(9):
@@ -123,11 +135,39 @@ class RFEventSink(EventSink):
 						warning_flag = False
 			if warning_flag:
 				log.warning("unrecognized data type in event object with type: " + et)
-		elif et == "debug_cmd_bad_format":
+			return encoded_event
+		self._encoders["debug_iwlist_scan_count"] = encdr_7
+
+		def encdr_8(et, ed):
 			encoded_event = "CMD: Bad format."
-		elif et == "debug_geofence_reset":
+			return encoded_event
+		self._encoders["debug_cmd_bad_format"] = encdr_8
+
+		def encdr_9(et, ed):
 			encoded_event = "GF: Target reset."
-		elif et == "debug_geofence_set" or et == "debug_geofence_set_failure":
+			return encoded_event
+		self._encoders["debug_geofence_reset"] = encdr_9
+
+		def encdr_10(et, ed):
+			encoded_event = None
+			if type(ed) == type(""):
+				encoded_event = "GF: Target %s triggered." % ed
+			else:
+				log.warning("unrecognized data type in event object with type: " + et)
+			return encoded_event
+		self._encoders["debug_geofence_trigger"] = encdr_10
+
+		def encdr_11(et, ed):
+			encoded_event = None
+			if type(ed) == type([]):
+				encoded_event = "GF: Target list: " + " ".join(ed)
+			else:
+				log.warning("unrecognized data type in event object with type: " + et)
+			return encoded_event
+		self._encoders["debug_geofence_list"] = encdr_11
+
+		def encdr_12(et, ed):
+			encoded_event = None
 			if type(ed) == type(""):
 				encoded_event = "GF: Target "
 				if et == "debug_geofence_set_failure":
@@ -137,25 +177,43 @@ class RFEventSink(EventSink):
 				encoded_event += ed
 			else:
 				log.warning("unrecognized data type in event object with type: " + et)
-		elif et == "geofence_trigger":
-			if type(ed) == type(""):
-				encoded_event = "GF: Target %s triggered." % ed
+			return encoded_event
+		self._encoders["debug_geofence_set"] = encdr_12
+		self._encoders["debug_geofence_set_failure"] = encdr_12
+
+		def encdr_14(et, ed):
+			encoded_event = None
+			if type(ed) == type({}) and "lat" in ed and "lon" in ed:
+				encoded_event = "GPS: " + "%.4f" % ed["lat"] + ", " + "%.4f" % ed["lon"]
+				if et == "debug_gps_jump":
+					encoded_event += " (?)"
+			elif ed is None:
+				encoded_event = "GPS: Location unavailable."
 			else:
 				log.warning("unrecognized data type in event object with type: " + et)
-		elif et == "debug_geofence_list":
-			if type(ed) == type([]):
-				encoded_event = "GF: Target list: " + " ".join(ed)
-			else:
-				log.warning("unrecognized data type in event object with type: " + et)
+			return encoded_event
+		self._encoders["debug_gps_location"] = encdr_14
+		self._encoders["debug_gps_jump"] = encdr_14
+
+	def encode_event(self, event):
+		et = event.get_type()
+		ed = event.get_raw_data()
+		log.debug("received event type: " + et)
+		encoded_event = None
+		timestamp = None
+		eets = None
+
+		if hasattr(event, "timestamp") and (type(event.timestamp) == type(9.0) or type(event.timestamp) == type(9)):
+			timestamp = event.timestamp
+
+		if et in self._encoders:
+			encoded_event = self._encoders[et](et, ed)
+			if encoded_event is not None:
+				eets = (timestamp, encoded_event)
 		else: # Unrecognized event
 			log.debug("unrecognized event")
-			pass
 
-		encoded_event_2 = None
-
-		if encoded_event is not None:
-			encoded_event_2 = (timestamp, encoded_event)
-		return encoded_event_2
+		return eets
 
 	def check_available(self, event):
 		et = event.get_type()
