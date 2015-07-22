@@ -155,7 +155,7 @@ class RFEventSink(EventSink):
 			else:
 				log.warning("unrecognized data type in event object with type: " + et)
 			return encoded_event
-		self._encoders["debug_geofence_trigger"] = encdr_10
+		self._encoders["geofence_trigger"] = encdr_10
 
 		def encdr_11(et, ed):
 			encoded_event = None
@@ -194,6 +194,22 @@ class RFEventSink(EventSink):
 			return encoded_event
 		self._encoders["debug_gps_location"] = encdr_14
 		self._encoders["debug_gps_jump"] = encdr_14
+
+		def encdr_15(et, ed):
+			if type(ed) != type(9.0):
+				log.warning("unrecognized data type in event object with type: " + et)
+				return None
+			encoded_event = "CPUT: %.3f" % ed
+			return encoded_event
+		self._encoders["cpu_temperature"] = encdr_15
+		
+		def encdr_16(et, ed):
+			if type(ed) != type(9.0):
+				log.warning("unrecognized data type in event object with type: " + et)
+				return None
+			encoded_event = "CPUF: %.3f" % ed
+			return encoded_event
+		self._encoders["cpu_frequency"] = encdr_16
 
 	def encode_event(self, event):
 		et = event.get_type()
