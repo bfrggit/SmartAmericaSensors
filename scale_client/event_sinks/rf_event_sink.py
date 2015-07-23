@@ -160,11 +160,15 @@ class RFEventSink(EventSink):
 		def encdr_11(et, ed):
 			encoded_event = None
 			if type(ed) == type([]):
-				encoded_event = "GF: Target list: " + " ".join(ed)
+				if et == "debug_geofence_list":
+					encoded_event = "GF: Target list: " + " ".join(ed)
+				elif et == "debug_schedule_list":
+					encoded_event = "SCLDR: Schedule list: " + " ".join(ed)
 			else:
 				log.warning("unrecognized data type in event object with type: " + et)
 			return encoded_event
 		self._encoders["debug_geofence_list"] = encdr_11
+		self._encoders["debug_schedule_list"] = encdr_11
 
 		def encdr_12(et, ed):
 			encoded_event = None
@@ -210,6 +214,53 @@ class RFEventSink(EventSink):
 			encoded_event = "CPUF: %.3f" % ed
 			return encoded_event
 		self._encoders["cpu_frequency"] = encdr_16
+
+		def encdr_17(et, ed):
+			if type(ed) != type(""):
+				log.warning("unrecognized data type in event object with type: " + et)
+				return None
+			if et == "debug_schedule_load_failure":
+				encoded_event = "SCLDR"
+			elif et == "debug_schedule_load_failure_2":
+				encoded_event = "SCPLR"
+			else:
+				return None
+			encoded_event += ": Schedule failed to load: " + ed
+			return encoded_event
+		self._encoders["debug_schedule_load_failure"] = encdr_17
+		self._encoders["debug_schedule_load_failure_2"] = encdr_17
+		
+		def encdr_18(et, ed):
+			if type(ed) != type(""):
+				log.warning("unrecognized data type in event object with type: " + et)
+				return None
+			encoded_event = "SCPLR: Schedule loaded: " + ed
+			return encoded_event
+		self._encoders["debug_schedule_load_success"] = encdr_18
+		
+		def encdr_19(et, ed):
+			if type(ed) != type(""):
+				log.warning("unrecognized data type in event object with type: " + et)
+				return None
+			encoded_event = "SCHDL: Schedule started: " + ed
+			return encoded_event
+		self._encoders["debug_schedule_started"] = encdr_19
+		
+		def encdr_20(et, ed):
+			if type(ed) != type(""):
+				log.warning("unrecognized data type in event object with type: " + et)
+				return None
+			encoded_event = "SCHDL: Schedule dropped: " + ed
+			return encoded_event
+		self._encoders["debug_schedule_dropped"] = encdr_20
+		
+		def encdr_21(et, ed):
+			if type(ed) != type(""):
+				log.warning("unrecognized data type in event object with type: " + et)
+				return None
+			encoded_event = "SCHDL: Schedule completed: " + ed
+			return encoded_event
+		self._encoders["debug_schedule_completed"] = encdr_21
 
 	def encode_event(self, event):
 		et = event.get_type()

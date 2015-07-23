@@ -36,7 +36,9 @@ class LocationManager(Application):
 		LocationManager should deal with all location events published by
 		location providers.
 		"""
-		if not self._ack_success:
+		et = event.get_type()
+
+		if not self._ack_success and et != "location_manager_ack":
 			ack = SensedEvent(sensor="lman",
 					data={"event": "location_manager_ack", "value": self},
 					priority=4)
@@ -48,7 +50,6 @@ class LocationManager(Application):
 			return
 
 		# Analyze event
-		et = event.get_type()
 		data = event.get_raw_data()
 		if not et in LocationManager.SOURCE_SUPPORT:
 			return

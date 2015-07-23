@@ -76,6 +76,8 @@ class EventReporter(Application):
             return
         if re.match("cmd", et) is not None:
             return
+        if re.match("obj", et) is not None:
+            return
 
         # Ignorance
         if self._lman is not None:

@@ -88,13 +88,26 @@ class RFListener(ThreadedApplication):
 			if len(lc) < 3:
 				sd["event"] = "cmd_geofence_list"
 			else:
-				if lc[2] in ["R", "RST", "RESET"] and len(lc) == 3:
+				if lc[2] in ["L", "LS", "LST", "LIST"] and len(lc) == 3:
+					sd["event"] = "cmd_geofence_list"
+				elif lc[2] in ["R", "RST", "RESET"] and len(lc) == 3:
 					sd["event"] = "cmd_geofence_reset"
 				elif lc[2] in ["S", "SET"] and len(lc) == 4:
 					sd["event"] = "cmd_geofence_set"
 					sd["value"] = lc[3]
-				elif lc[2] in ["L", "LS", "LST", "LIST"] and len(lc) == 3:
-					sd["event"] = "cmd_geofence_list"
+				else:
+					sd["event"] = "debug_cmd_bad_format"
+		elif lc[1] == "SC":
+			if len(lc) < 3:
+				sd["event"] = "cmd_schedule_list"
+			else:
+				if lc[2] in ["L", "LS", "LST", "LIST"] and len(lc) == 3:
+					sd["event"] = "cmd_schedule_list"
+				elif lc[2] in ["R", "RST", "RESET", "D", "DRP", "DROP"] and len(lc) == 3:
+					sd["event"] = "cmd_schedule_drop"
+				elif lc[2] in ["S", "SET", "LD", "LOAD"] and len(lc) == 4:
+					sd["event"] = "cmd_schedule_load"
+					sd["value"] = lc[3]
 				else:
 					sd["event"] = "debug_cmd_bad_format"
 		else:

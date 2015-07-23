@@ -4,6 +4,7 @@ from scale_client.core.sensed_event import SensedEvent
 import time
 import copy
 import yaml
+import re
 from threading import Lock
 from geopy import distance
 
@@ -97,7 +98,6 @@ class GPSGeofence(Application):
 								priority=4
 							)
 						self.publish(debug_e)
-			return
 		elif et == "cmd_geofence_reset":
 			with self._t_lock:
 				self._target = None
@@ -110,7 +110,6 @@ class GPSGeofence(Application):
 							priority=5
 						)
 					self.publish(debug_e)
-			return
 		elif et == "cmd_geofence_list":
 			list_e = SensedEvent(
 					sensor="geofence",
@@ -118,6 +117,12 @@ class GPSGeofence(Application):
 					priority=7
 				)
 			self.publish(list_e)
+		else:
+			# Command not recognized
+			# Probably this command is NOT for self
+			pass
+		if re.match("cmd", et) is not None:
+			return
 
 		# Check if event contains geo-coordinates
 		if self._target is None:
