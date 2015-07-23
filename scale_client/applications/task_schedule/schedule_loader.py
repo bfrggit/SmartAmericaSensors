@@ -35,6 +35,12 @@ class ScheduleLoader(Application):
 		schdl_1.append(WaitForRFMessageTask("Hello"))
 		self._schedules["HELLO"] = schdl_1
 
+		from wait_for_heartbeat_task import WaitForHeartbeatTask
+
+		schdl_2 = TaskSchedule("HB")
+		schdl_2.append(WaitForHeartbeatTask())
+		self._schedules["HB"] = schdl_2
+
 	def _load_config(self, config):
 		if type(config) != type(""):
 			return

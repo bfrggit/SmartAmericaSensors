@@ -1,20 +1,16 @@
 from task_schedule import TaskItem
 from scale_client.core.sensed_event import SensedEvent
 
-class WaitForRFMessageTask(TaskItem):
-	def __init__(self, text):
+class WaitForHeartbeatTask(TaskItem):
+	def __init__(self):
 		TaskItem.__init__(self)
-
-		if type(text) != type(""):
-			raise TypeError
-		self._text = text
 	
 	def on_start(self):
 		evtls = []
 		evt_0 = SensedEvent(
 				sensor="task",
 				priority=8,
-				data={"event": "debug_text", "value": "Awaiting: %s" % self._text}
+				data={"event": "debug_text", "value": "Awaiting heartbeat"}
 			)
 		evtls.append(evt_0)
 		return evtls
@@ -24,7 +20,7 @@ class WaitForRFMessageTask(TaskItem):
 		evt_0 = SensedEvent(
 				sensor="task",
 				priority=8,
-				data={"event": "debug_text", "value": "Received: %s" % self._text}
+				data={"event": "debug_text", "value": "Received heartbeat"}
 			)
 		evtls.append(evt_0)
 		return evtls
@@ -33,9 +29,7 @@ class WaitForRFMessageTask(TaskItem):
 		et = event.get_type()
 		ed = event.get_raw_data()
 		
-		if et != "rfcomm_message":
-			return False
-		if ed != self._text:
+		if et != "heartbeat":
 			return False
 		return True
 
