@@ -62,6 +62,9 @@ class TaskSchedule:
 
 	def get_name(self):
 		return self.get_label()
+	
+	def get_len(self):
+		return len(self._tasks)
 
 	def append(self, item):
 		if not isinstance(item, TaskItem):

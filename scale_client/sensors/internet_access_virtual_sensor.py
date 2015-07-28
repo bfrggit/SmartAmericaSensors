@@ -37,3 +37,13 @@ class InternetAccessVirtualSensor(ThreadedVirtualSensor):
 			success = True
 		self._last_value = raw
 		return success
+
+	def on_event(self, event, topic):
+		et = event.get_type()
+		ed = event.get_raw_data()
+
+		if et != "debug_internet_access_query":
+			return
+		
+		self._last_value = None
+

@@ -88,6 +88,11 @@ class SchedulePlayer(Application):
 			elif cwt.listener_check(event):
 				evtls += cwt.on_complete()
 				evtls += self._cws.proceed()
+				cwt = self._cws.get_cwt()
+				if cwt is not None:
+					evtls += cwt.on_start()
+				else:
+					self._cws = None
 			for evt in evtls:
 				self.publish(evt)
 

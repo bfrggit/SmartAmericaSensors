@@ -113,11 +113,17 @@ class RFEventSink(EventSink):
 		def encdr_6(et, ed):
 			encoded_event = None
 			if type(ed) == type(""):
-				encoded_event = "TEXT: " + ed
+				if et == "debug_text":
+					encoded_event = "TEXT: " + ed
+				elif et == "debug_prompt":
+					encoded_event = "PROMPT: " + ed
+				else:
+					return None # Should not happen
 			else:
 				log.warning("unrecognized data type in event object with type: " + et)
 			return encoded_event
 		self._encoders["debug_text"] = encdr_6
+		self._encoders["debug_prompt"] = encdr_6
 
 		def encdr_7(et, ed):
 			encoded_event = None
