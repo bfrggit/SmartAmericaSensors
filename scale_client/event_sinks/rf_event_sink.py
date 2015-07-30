@@ -268,6 +268,35 @@ class RFEventSink(EventSink):
 			return encoded_event
 		self._encoders["debug_schedule_completed"] = encdr_21
 
+		def encdr_22(et, ed):
+			encoded_event = "SPD: MQTT speed test terminated."
+			if ed:
+				encoded_event = "SPD: MQTT speed test initiated."
+			return encoded_event
+		self._encoders["debug_mqtt_speed_test_run"] = encdr_22
+
+		def encdr_23(et, ed):
+			encoded_event = "SPD: MQTT speed test not running."
+			if ed:
+				encoded_event = "SPD: MQTT speed test already running."
+			return encoded_event
+		self._encoders["debug_mqtt_speed_test_cmd_failure"] = encdr_23
+
+		def encdr_24(et, ed):
+			if type(ed) != type(()) or len(ed) != 2 or type(ed[0]) != type(9.0) or type(ed[1]) != type(9.0) or ed[0] < 0.0:
+				log.warning("unrecognized data type in event object with type: " + et)
+				return None
+			encoded_event = "SPD: %d ms, " % round(ed[1] * 1000.0)
+			if ed[0] >= 2 ** 20:
+				encoded_event += "%.2f MB/s" % (ed[0] / 2 ** 20)
+			elif ed[0] >= 2 ** 10:
+				encoded_event += "%.2f KB/s" % (ed[0] / 2 ** 10)
+			else:
+				encoded_event += "%.2f B/s" % ed[0]
+			return encoded_event
+		self._encoders["debug_mqtt_speed_test_result"] = encdr_24
+				
+
 	def encode_event(self, event):
 		et = event.get_type()
 		ed = event.get_raw_data()

@@ -18,6 +18,7 @@ class RFListener(ThreadedApplication):
 	DEFAULT_PRIORITY = 9 
 	MESSAGE_PRIORITY = 9
 	CONNECT_PRIORITY = 7
+	COMMAND_PRIORITY = 4
 
 	def on_start(self):
 		self.run_in_background(self._io_loop)
@@ -44,24 +45,28 @@ class RFListener(ThreadedApplication):
 					self.publish(self._debug_connect_event(False))
 					sleep(1)
 					break
+
 				message = message.rstrip()
 				structured_data = None
+				prio = self.DEFAULT_PRIORITY
 
 				# Check if message is a command
 				if re.match("[Cc]\s", message) is not None and message.split()[0] in ["C", "c"]:
 					structured_data = self._parse_command(message.upper())
-				else:
+					prio = self.COMMAND_PRIORITY
+				else: # Otherwise it is just a message
 					structured_data = {
 							"event": "rfcomm_message",
 							"value": message
 						}
+					prio = self.MESSAGE_PRIORITY
 
 				if structured_data is None:
 					continue
 				event = SensedEvent(
 						sensor=self._dev_name,
 						data=structured_data,
-						priority=self.MESSAGE_PRIORITY
+						priority=prio
 					)
 				self.publish(event)
 
@@ -109,6 +114,21 @@ class RFListener(ThreadedApplication):
 					sd["event"] = "cmd_schedule_load"
 					sd["value"] = lc[3]
 				else:
+					sd["event"] = "debug_cmd_bad_format"
+		elif lc[1] == "SPD":
+			if len(lc) < 3:
+				sd["event"] = "debug_cmd_bad_format"
+			else:
+				if lc[2] in ["M", "MQ", "MQT", "MQTT"] and len(lc) == 4:
+					if lc[3] in ["S", "START"]:
+						sd["event"] = "cmd_mqtt_speed_test"
+						sd["value"] = True
+					elif lc[3] in ["R", "RST", "RESET", "STP", "STOP", "T", "TRM", "TERM", "TERMINATE"]:
+						sd["event"] = "cmd_mqtt_speed_test"
+						sd["value"] = False
+					else:
+						sd["event"] = "debug_cmd_bad_format"
+				else:	
 					sd["event"] = "debug_cmd_bad_format"
 		else:
 			sd["event"] = "debug_cmd_bad_format"

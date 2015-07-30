@@ -1,6 +1,7 @@
 from scale_client.core.application import Application
 from scale_client.core.sensed_event import SensedEvent
 from task_schedule import *
+from wait_for_rf_message_task import WaitForRFMessageTask
 
 import copy
 import yaml
@@ -29,8 +30,6 @@ class ScheduleLoader(Application):
 		schdl_0 = TaskSchedule()
 		self._schedules["EMPTY"] = schdl_0
 		self._schedules["BLANK"] = schdl_0
-		
-		from wait_for_rf_message_task import WaitForRFMessageTask
 
 		schdl_1 = TaskSchedule("HELLO")
 		schdl_1.append(WaitForRFMessageTask("Hello"))
@@ -65,9 +64,9 @@ class ScheduleLoader(Application):
 		if type(fl) != type([]):
 			return
 
-		from wait_for_rf_message_task import WaitForRFMessageTask
 		from geofence_task import GeofenceTask
 		from internet_access_task import InternetAccessTask
+		from speed_test_task import SpeedTestTask
 
 		for f in fl:
 			if f.endswith(".schedule.yml"):
@@ -94,16 +93,20 @@ class ScheduleLoader(Application):
 								continue
 							if li["type"] == "input":
 								if not "text" in li or type(li["text"]) != type(""):
-									log.warning("invalid input task, missing text")
+									log.warning("invalid %s task, missing text" % li["type"])
 								else:
 									schdl_t.append(WaitForRFMessageTask(li["text"]))
 							elif li["type"] == "geofence":
 								if not "target" in li or type(li["target"]) != type(""):
-									log.warning("invalid geofence task, missing target")
+									log.warning("invalid %s task, missing target" % li["type"])
 								else:
 									schdl_t.append(GeofenceTask(li["target"]))
 							elif li["type"] == "internet":
 								schdl_t.append(InternetAccessTask())
+							elif li["type"] == "speed_test":
+								if not "methods" in li or type(li["methods"]) != type([]):
+									log.warning("invalid %s task, missing methods" % li["type"])
+								schdl_t.append(SpeedTestTask(li["methods"]))
 							else:
 								log.warning("invalid list item, unknown task type")
 						self._schedules[cfg["id"]] = schdl_t
