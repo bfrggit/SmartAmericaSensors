@@ -27,6 +27,7 @@ EventSinks:
         event_types:
             - "location_update"
             - "iwlist_scan"
+            - "mqtt_speed"
     - RFWriter:
         class: "rf_event_sink.RFEventSink"
         tty_path: "/dev/rfcomm9"
@@ -47,6 +48,13 @@ Applications:
     - GPSGeofence:
         class: "gps_geofence.GPSGeofence"
         config: "/etc/scale/client/cycle/targets.yml"
+        debug: true
+    - ScheduleLoader:
+        class: "task_schedule.schedule_loader.ScheduleLoader"
+        debug: true
+        config_dir: "/etc/scale/client/cycle"
+    - SchedulePlayer:
+        class: "task_schedule.schedule_player.SchedulePlayer"
         debug: true
 
 Sensors:
@@ -99,4 +107,20 @@ Sensors:
     - GPSSensor:
         class: "location_sensors.gps_virtual_sensor.GPSVirtualSensor"
         dev_name: "gps0"
+    #- CPUTemperatureVirtualSensor:
+    #    class: "cpu_temperature_virtual_sensor.CPUTemperatureVirtualSensor"
+    #    dev_name: "krnlt0"
+    #    interval: 10
+    #    threshold: 45.0
+    #- CPUFrequencyVirtualSensor:
+    #    class: "cpu_frequency_virtual_sensor.CPUFrequencyVirtualSensor"
+    #    dev_name: "cpufr0"
+    #    interval: 10
+    #- MQTTSpeedTest:
+    #    class: "network_speed_sensors.mqtt_speed_test.MQTTSpeedTest"
+    #    dev_name: "iwspd0"
+    #    hostname: "dime.smartamerica.io"
+    #    hostport: 1883
+    #    if_name: "wlan0"
+    #    debug: true
 
