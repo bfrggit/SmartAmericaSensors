@@ -19,11 +19,10 @@ class VirtualSensor(Application):
       1) How to handle sampling rates, modifying priorities, and turning sensors on/off remotely?
     """
     
-    # It works!
     DEFAULT_PRIORITY = 5
 
-    def __init__(self, broker, device=None, interval=1):
-        super(VirtualSensor, self).__init__(broker)
+    def __init__(self, broker, device=None, interval=1, **kwargs):
+        super(VirtualSensor, self).__init__(broker, **kwargs)
 
         # TODO: anonymous device descriptor?
         self.device = device
@@ -68,20 +67,18 @@ class VirtualSensor(Application):
                             structured_data, priority)
         return event
 
-    def set_wait_period(self, period):
+    def set_wait_period(self, period=1):
         """
         Accepts a datetime object, or number of seconds, representing how long the VirtualSensor should wait before
-        reading data each time.  The default is 1 second.
+        reading data each time.  The default is 1 second.  The timer will be immediately reset by this call.
         :return:
         """
         self._wait_period = period
         try:
+            # WARNING: circuits-specific!
             self._timer.reset(self._wait_period)
         except AttributeError:
             pass
-        # TODO: be able to reset the timer to update this time once it's
-        # started, which will require keeping a handle to the underlying timer
-        # object...
 
     def policy_check(self, event):
         """
@@ -96,9 +93,9 @@ class VirtualSensor(Application):
         """
         This function actually reads sensor data and then publishes it if it passes the policy_check()
         """
-        log.debug("%s reading sensor data..." % self.get_type())
 
         event = self.read()
+        log.debug("%s read sensor data. raw value: %s" % (self.get_type(), event.get_raw_data()))
         if event is None:
             log.error("SensedEvent is None! Default policy is to not report.")
             return
@@ -116,4 +113,5 @@ class VirtualSensor(Application):
         if self._wait_period is None:
             return
         self._do_sensor_read()
-        self.timed_call(self._wait_period, VirtualSensor._do_sensor_read, repeat=True)
+        # We make an effort to get the child class's _do_sensor_read method in case they override it.
+        self.timed_call(self._wait_period, self.__class__._do_sensor_read, repeat=True)

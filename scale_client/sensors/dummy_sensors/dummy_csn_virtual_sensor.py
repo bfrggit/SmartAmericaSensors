@@ -9,8 +9,8 @@ log = logging.getLogger(__name__)
 
 
 class DummyCSNVirtualSensor(CSNVirtualSensor):
-    def __init__(self, broker, device=None):
-        CSNVirtualSensor.__init__(self, broker, device=device)
+    def __init__(self, broker, device=None, **kwargs):
+        CSNVirtualSensor.__init__(self, broker, device=device, **kwargs)
         self._rand = Random()
         self._rand.seed()
         self._whatflag = True
@@ -35,8 +35,9 @@ class DummyCSNVirtualSensor(CSNVirtualSensor):
         self._whatflag = not self._whatflag
 
         # reset the timer to a random time so that events appear more dynamically
-        # NOTE: this relies on the circuits implementation!  consider it a hack!
+        # NOTE: this relies on the set_wait_period API implementation resetting
+        # the timer immediately!  consider it a hack!
         wait_time = self._rand.random() * 2 * DummyCSNVirtualSensor.WAIT_MEAN
 
-        self._timer.reset(wait_time)
+        self.set_wait_period(wait_time)
         return readings

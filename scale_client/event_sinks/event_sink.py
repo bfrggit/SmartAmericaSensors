@@ -1,4 +1,5 @@
-from scale_client.core.application import Application
+from ..core.application import Application
+from scale_client.core.threaded_application import ThreadedApplication
 
 
 class EventSink(Application):
@@ -6,8 +7,8 @@ class EventSink(Application):
     create a new one, make use of the Application on_start() function to setup any connections or other resources
     needed."""
 
-    def __init__(self, broker=None):
-        super(EventSink, self).__init__(broker)
+    def __init__(self, broker=None, **kwargs):
+        super(EventSink, self).__init__(broker, **kwargs)
 
     def send_event(self, event):
         """
@@ -15,13 +16,13 @@ class EventSink(Application):
         :param event: SensedEvent
         :return:
         """
-        return self.send(self.encode_event(event))
+        return self.send_raw(self.encode_event(event))
 
-    def send(self, encoded_event):
+    def send_raw(self, encoded_event):
         """
         This function is the heart of every EventSink.  Use it to actually send raw data representing a SensedEvent
         over some connection.
-        :param event: raw encoding of a SensedEvent
+        :param encoded_event: raw encoding of a SensedEvent
         :raises IOError: when there is an issue sending the event
         """
         raise NotImplementedError()
@@ -40,4 +41,12 @@ class EventSink(Application):
         :param event: SensedEvent to encode
         :return: event encoded in a format ready to be immediately pushed to send(event)
         """
-        raise NotImplementedError()
+
+        return event.to_json()
+
+class ThreadedEventSink(EventSink, ThreadedApplication):
+    """
+    Use this class if you expect the EventSink to block for a long period of
+    time when sinking events, connecting to a remote server, etc.
+    """
+    pass

@@ -1,11 +1,11 @@
 from application import Application 
+from sensed_event import SensedEvent
 
 import time
 import re
 import logging
 log = logging.getLogger(__name__)
 
-from scale_client.core.sensed_event import SensedEvent
 
 class EventReporter(Application):
     """
@@ -15,8 +15,8 @@ class EventReporter(Application):
     Rather, it decides which SensedEvents to report when and then chooses from the
     available Publishers the ideal one to report the data via.
     """
-    def __init__(self, broker):
-        super(EventReporter, self).__init__(broker)
+    def __init__(self, broker, **kwargs):
+        super(EventReporter, self).__init__(broker, **kwargs)
         self.__sinks = []
         self._lman = None
         self._neta = None
@@ -35,6 +35,10 @@ class EventReporter(Application):
         """
         self.__sinks.append(sink)
 
+    def get_sinks(self):
+        """Returns a tuple of current event_sinks."""
+        return tuple(self.__sinks)
+
     #TODO: remove_sink?
 
     def on_event(self, event, topic):
@@ -51,16 +55,6 @@ class EventReporter(Application):
             log.debug("received location manager")
             return
 
-        if et == "internet_access":
-            self._neta = ed
-            if ed is not None:
-                if ed:
-                    log.info("Internet access successful")
-                else:
-                    log.info("Internet access failed")
-            else:
-                log.info("Internet access status unknown")
-            return
         elif et == "publisher_state":
             return
 
@@ -79,7 +73,7 @@ class EventReporter(Application):
         if re.match("obj", et) is not None:
             return
 
-        # Ignorance
+        # Ignorance <--- what does this mean???
         if self._lman is not None:
             if et in self._lman.SOURCE_SUPPORT:
                 return
@@ -107,7 +101,7 @@ class EventReporter(Application):
                 except ValueError:
                     pass
                 next
-            if sink.check_available(event):
+            elif sink.check_available(event):
                 if sink.send_event(event):
                     published = True
                 # TODO: only send via one of the sinks?
